@@ -86,7 +86,7 @@ yocto_build         latest              e33a051b537e        39 hours ago        
 Now let's start the container from the freshly created image:
 
 ```
-sudo run -v $PWD:/home/yocto_build/work -it --rm build_image:1.0 start_build.sh
+docker run -v $PWD:/home/yocto_build/work -it --rm build_image:1.0 start_build.sh
 ```
 This command shares the current folder with the container and mounts it at "/home/yocto_build/work". Care must be taken that if we change USERNAME at the creation of the customized image the mountpoint will need to be adjusted.
 Argument "--rm" instructs Docker to delete the container when the last command in the container exited. The container itself will be deleted but the shared folder not. This means that a user should build Yocto projects inside the shared folder in order to preserve the build artifacts when the container is deleted.
@@ -121,10 +121,10 @@ Before starting a Yocto project one usually needs to configure **git** by:
 $ git config --global user.email "you@example.com"
 $ git config --global user.name "Your Name"
 ```
-When a container gets deleted only contents of shared folders will bre preserved, all other modified files will be deleted. This means that git global settings and bash history ill also be last. So every time a new container is started git settings need to be given again.
-As a workaround fo this one can tell Docker not to automatically delete the container after it has exited by omitting the --rm flag during startup:
+When a container gets deleted only contents of shared folders will be preserved, all other modified files will be deleted. This means that git global settings and bash history ill also be last. So every time a new container is started git settings need to be given again.
+As a workaround for this one can tell Docker not to automatically delete the container after it has exited by omitting the --rm flag during startup:
 ```
-sudo run -v $PWD:/home/yocto_build/work -it build_image:1.0 start_build.sh
+docker run -v $PWD:/home/yocto_build/work -it build_image:1.0 start_build.sh
 ```
 Upon exit the container will remain in a stopped state:
 ```
@@ -137,7 +137,7 @@ This stopped container can be restarted later by:
 ```
 $ docker start -i 0d9edc9cfd7f
 ```
-The shared folder doesn't need to be specified, it will be automatically mounted at the old location. git global setting, bash history and other locally modified files will be preserved after any subsequent stop and restart until the container is explicitly deleted by:
+The shared folder doesn't need to be specified, it will be automatically mounted at the old location. git global settings, bash history and other locally modified files will be preserved after any subsequent stop and restart until the container is explicitly deleted by:
 ```
 docker rm 0d9edc9cfd7f
 ```
