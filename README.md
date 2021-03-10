@@ -31,14 +31,25 @@ This command should display something like:
 > &nbsp;&nbsp;&nbsp;&nbsp;└─30127 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
 
 In case Docker service is not running please start it by:
+
 `$ sudo systemctl start docker`
+
 <br/>
+
+### Accessing Docker as a normal user
+Docker daemon is usually not accessible by non-root users. Because of this "docker" commands must always be executed as root, eg. with "sudo ...". For easing typing one can add a normal user to the "docker" group to be able to access the docker daemon without "sudo":
+```
+$ sudo usermod -aG docker $(id -un)
+```
+
+<br/>
+
 ### Starting *yocto_build* container image
 Please download yocto_build.tar.bz2 from the latest release: https://github.com/ArrowElectronics/yocto_build/releases/tag/v1.0
 
 Load it into Docker with:
 ```
-$ bzcat -k yocto_build.tar.bz2 | sudo docker load
+$ bzcat -k yocto_build.tar.bz2 | docker load
 ```
 During the load process Docker will display something like this:
 ```
@@ -51,44 +62,57 @@ Loaded image: yocto_build:latest
 ```
 The loaded image can be seen by executing:
 ```
-$ sudo docker images
+$ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 yocto_build         latest              adc1fc576e37        3 minutes ago      2.04GB
 ```
-Now we can create a container from the yocto_build image with:
+<br/>
+We will share a local folder with the container and the user inside the container will need to have the same UID and GID to have the same permissions on the shared folder. So let's customize the base image and create a new user with the same UID and GID as the active user. The following command needs to be executed in the folder where 'Dockerfile' resides:
+
 ```
-$ sudo docker run -it yocto_build start_build.sh
+docker build -t build_image:1.0 --build-arg USERNAME=yocto_build --build-arg PUID=$(id -u) --build-arg PGID=$(id -g) .
 ```
-Docker will start the created container and open a terminal into it. The prompt will look something like:
+USERNAME is the name of the user we're about to create inside the container. Right now it's set to "yocto_build" but it can be changed.
+Name and tag of the customized image will be "build_image:1.0"
+We can see that a new image has been successfully created by:
 ```
-yocto_build@4488f1a7c958:~$ 
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED              SIZE
+build_image         1.0                 66a3922d72f4        About a minute ago   2.07GB
+yocto_build         latest              e33a051b537e        39 hours ago         2.07GB
 ```
-Inside the container there exist only 2 users: root and yocto_build. The later will be used to build Yocto projects.
-The ID of the running container can be checked by executing the following command in another terminal window:
+
+<br/>
+Now let's start the container from the freshly created image:
+
 ```
-$ sudo docker ps -a
+sudo run -v $PWD:/home/yocto_build/work -it --rm build_image:1.0 start_build.sh
+```
+This command shares the current folder with the container and mounts it at "/home/yocto_build/work". Care must be taken that if we change USERNAME at the creation of the customized image the mountpoint will need to be adjusted.
+Argument "--rm" instructs Docker to delete the container when the last command in the container exited. The container itself will be deleted but the shared folder not. This means that a user should build Yocto projects inside the shared folder in order to preserve the build artifacts when the container is deleted.
+<br/>
+After having executed the previous command we will receive a prompt like this:
+```
+yocto_build@917c17a4d35e:~$
+```
+<br/>
+The ID of the running container is shown in the prompt or can be checked by executing the following command in another terminal window on the host:
+
+```
+$ docker ps -a
 ```
 The response will look like:
 ```
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
-4488f1a7c958        yocto_build         "start_build.sh"    4 minutes ago       Up 4 minutes                            wonderful_borg
+917c17a4d35e        build_image:1.0     "start_build.sh"    8 seconds ago       Up 6 seconds                            mystifying_thompson
 ```
 One can open another terminal into the same running container by:
 ```
-$ sudo docker exec -it 4488f1a7c958 start_build.sh
+$ docker exec -it 917c17a4d35e start_build.sh
 ```
-Note that 4488f1a7c958 is the container ID queried by the previous command.
-When the last container terminal window exits the container will stop. One can see the container status change:
-```
-$ sudo docker ps -a
-CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                      PORTS               NAMES
-4488f1a7c958        yocto_build         "start_build.sh"    12 minutes ago      Exited (0) 12 seconds ago                       wonderful_borg
-```
-At this point no new commands can be executed inside the container until it is restarted again by:
-```
-$ sudo docker start -i 4488f1a7c958
-yocto_build@4488f1a7c958:~$
-```
+Note that 917c17a4d35e is the container ID queried by the previous command.
+When the last container terminal window exits the container will stop and be automatically deleted.
+
 <br/>
 
 ### Working with containers
@@ -97,11 +121,42 @@ Before starting a Yocto project one usually needs to configure **git** by:
 $ git config --global user.email "you@example.com"
 $ git config --global user.name "Your Name"
 ```
+When a container gets deleted only contents of shared folders will bre preserved, all other modified files will be deleted. This means that git global settings and bash history ill also be last. So every time a new container is started git settings need to be given again.
+As a workaround fo this one can tell Docker not to automatically delete the container after it has exited by omitting the --rm flag during startup:
+```
+sudo run -v $PWD:/home/yocto_build/work -it build_image:1.0 start_build.sh
+```
+Upon exit the container will remain in a stopped state:
+```
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                      PORTS               NAMES
+0d9edc9cfd7f        build_image:1.0     "start_build.sh"    23 seconds ago      Exited (0) 11 seconds ago                       happy_pascal
+
+```
+This stopped container can be restarted later by:
+```
+$ docker start -i 0d9edc9cfd7f
+```
+The shared folder doesn't need to be specified, it will be automatically mounted at the old location. git global setting, bash history and other locally modified files will be preserved after any subsequent stop and restart until the container is explicitly deleted by:
+```
+docker rm 0d9edc9cfd7f
+```
+
 <br/>
-When a Yocto project has been built inside the container files can be copied out from the container by:
 
+### Moving Docker data folder to another volume
+Docker data folder usually resides at /var/lib/docker. For moving it elsewhere one needs to first stop te running docker daemon:
 ```
-$ sudo docker cp 4488f1a7c958:<src path> <dst path>
+$ sudo systemctl stop docker
 ```
-This command works also with stopped containers.
-
+Then the file **/etc/docker/daemon.json** must be created with the following content:
+```
+{ 
+   "data-root": "/path/to/your/docker" 
+}
+```
+Old Docker data folder must be copied (or moved) to the new location: /path/to/your/docker
+After this Docker can be started again:
+```
+$ sudo systemctl start docker
+```
