@@ -57,7 +57,7 @@ Please download yocto_build.tar.bz2 from the latest release: https://github.com/
 
 Load it into Docker with:
 ```
-$ bzcat -k yocto_build.tar.bz2 | docker load
+$ bzcat yocto_build.tar.bz2 | docker load
 ```
 During the load process Docker will display something like this:
 ```
@@ -72,7 +72,7 @@ The loaded image can be seen by executing:
 ```
 $ docker images
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-yocto_build         latest              adc1fc576e37        3 minutes ago      2.04GB
+yocto_build         latest              e33a051b537e        3 minutes ago      2.04GB
 ```
 <br/>
 We will share a local folder with the container and the user inside the container will need to have the same UID and GID to have the same permissions on the shared folder. So let's customize the base image and create a new user with the same UID and GID as the active user. The following command needs to be executed in the folder where 'Dockerfile' resides:
