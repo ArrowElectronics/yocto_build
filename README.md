@@ -128,6 +128,13 @@ When the last container terminal window exits the container will stop and be aut
 
 <br/>
 
+### [Building Yocto BSP for the Arrow AI-ML i.MX8X board](https://github.com/ArrowElectronics/yocto_build/tree/master/build_ai_ml)
+
+
+### [Building Yocto BSP for the Arrow Thor96 i.MX8 board](https://github.com/ArrowElectronics/yocto_build/tree/master/build_thor96)
+
+<br/>
+
 ### Working with containers
 In [build_ai_ml folder](https://github.com/ArrowElectronics/yocto_build/tree/master/build_ai_ml) we give a standalone and stateless example for building a BSP for the Arrow AI-ML i.MX8X board. If one plans to work with other Yocto projects some more measures must be taken.
 Before starting a Yocto project one usually needs to configure **git** by:
