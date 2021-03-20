@@ -20,3 +20,4 @@ ENV GIT_USEREMAIL ${GIT_USEREMAIL}
 ENV GIT_USERNAME ${GIT_USERNAME}
 COPY ./build_ai_ml/build_ai_ml.sh /home/${USERNAME}/
 COPY ./build_thor96/build_thor96.sh /home/${USERNAME}/
+COPY ./build_av96/build_av96.sh /home/${USERNAME}/
