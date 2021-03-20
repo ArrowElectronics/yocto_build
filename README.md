@@ -53,7 +53,7 @@ Before going on with this how-to please set your credentials in git like above. 
 <br/>
 
 ### Starting *yocto_build* container image
-Please download yocto_build.tar.bz2 from the latest release: https://github.com/ArrowElectronics/yocto_build/releases/tag/v1.0
+Please download yocto_build.tar.bz2 from the latest release: https://github.com/ArrowElectronics/yocto_build/releases/tag/v1.1
 
 Load it into Docker with:
 ```
