@@ -133,6 +133,12 @@ When the last container terminal window exits the container will stop and be aut
 
 ### [Building Yocto BSP for the Arrow Thor96 i.MX8 board](https://github.com/ArrowElectronics/yocto_build/tree/master/build_thor96)
 
+
+### [Building Yocto BSP for the Arrow Avenger96 board](https://github.com/ArrowElectronics/yocto_build/tree/master/build_av96)
+
+
+### [Building Yocto BSP for the Arrow Shield96 board](https://github.com/ArrowElectronics/yocto_build/tree/master/build_sd96)
+
 <br/>
 
 ### Working with containers
