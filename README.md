@@ -187,3 +187,12 @@ After this Docker can be started again:
 ```
 $ sudo systemctl start docker
 ```
+
+<br/>
+
+### Limiting CPU usage of container
+`--cpuset-cpus` argument can be used to assign only specific CPU cores to a container. The following command allows the container to use only virtual CPU core #1 and #2:
+```
+$ docker run -v $PWD:/home/yocto_build/work -it --cpuset-cpus="1,2" --rm -u yocto_build \
+-w /home/yocto_build build_image:1.0 /home/yocto_build/build_sd96.sh
+```
